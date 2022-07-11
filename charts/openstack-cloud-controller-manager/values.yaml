@@ -1,0 +1,103 @@
+# Values OpenStack Cloud Controller Manager Helm Chart
+#
+# Define deployment mode for the controller and provide cloud credentials in cloudConfig at the end of the file
+#
+# Image repository name and tag
+image:
+  repository: docker.io/k8scloudprovider/openstack-cloud-controller-manager
+  tag: ""
+
+# Additional containers which are run before the app containers are started.
+extraInitContainers: []
+# - name: wait
+#   image: busybox
+#   command: ['sh', '-c', 'echo waiting for 10 seconds; sleep 10;']
+
+# Set resources for Kubernetes daemonset
+resources: {}
+# resources:
+#   requests:
+#     cpu: 200m
+
+# Set livenessProbe for Kubernetes daemonset. Used the same port for servicemonitor metrics
+livenessProbe: {}
+# livenessProbe:
+#   httpGet:
+#    path: /metrics
+#    port: 10258
+
+# Set readinessProbe in the same way like livenessProbe
+readinessProbe: {}
+
+# Set nodeSelector where the controller shut run, i.e. controlplane nodes
+nodeSelector: []
+# nodeSelector:
+#   node-role.kubernetes.io/controlplane: "true"
+
+# Set tolerations for nodes where the controller should run, i.e. node should uninitialized, controlplane...
+tolerations: []
+# tolerations:
+#   - key: node.cloudprovider.kubernetes.io/uninitialized
+#     value: "true"
+#     effect: NoSchedule
+#   - key: node-role.kubernetes.io/controlplane
+#     value: "true"
+#     effect: NoSchedule
+#   - key: node-role.kubernetes.io/etcd
+#     value: "true"
+#     effect: NoExecute
+
+# Any extra arguments for openstack-cloud-controller-manager
+controllerExtraArgs: {}
+# controllerExtraArgs: |-
+#   - --cluster-name=my-cluster
+
+# Create a service monitor for Prometheus Operator
+serviceMonitor: {}
+# serviceMonitor:
+#   enabled: true
+
+# Create a secret resource cloud-config (or other name) to store credentials and settings from cloudConfig
+# You can also provide your own secret (not created by the Helm chart), in this case set create to false
+# and adjust the name of the secret as necessary
+secret:
+  create: true
+  name: cloud-config
+
+# Log verbosity level.
+# See https://github.com/kubernetes/community/blob/master/contributors/devel/sig-instrumentation/logging.md
+# for description of individual verbosity levels.
+logVerbosityLevel: 2
+
+# Specify settings with the same key as the CCM config: https://github.com/kubernetes/cloud-provider-openstack/blob/master/docs/openstack-cloud-controller-manager/using-openstack-cloud-controller-manager.md#config-openstack-cloud-controller-manager
+cloudConfig:
+  global:
+  networking:
+  loadBalancer:
+  blockStorage:
+  metadata:
+
+# The following three volumes are required to use all OCCM controllers,
+# but might not be needed if you just use a specific controller
+# Additional volumes that should be available to the pods:
+extraVolumes:
+  - name: flexvolume-dir
+    hostPath:
+      path: /usr/libexec/kubernetes/kubelet-plugins/volume/exec
+  - name: ca-certs
+    hostPath:
+      path: /etc/ssl/certs
+  - name: k8s-certs
+    hostPath:
+      path: /etc/kubernetes/pki
+# Where the additional volumes should be mounted into the pods:
+extraVolumeMounts:
+  - name: flexvolume-dir
+    mountPath: /usr/libexec/kubernetes/kubelet-plugins/volume/exec
+    readOnly: true
+  - name: ca-certs
+    mountPath: /etc/ssl/certs
+    readOnly: true
+  - name: k8s-certs
+    mountPath: /etc/kubernetes/pki
+    readOnly: true

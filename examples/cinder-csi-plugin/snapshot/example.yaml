@@ -1,0 +1,30 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: csi-sc-cinderplugin
+provisioner: evs.csi.huaweicloud.com
+
+---
+
+apiVersion: snapshot.storage.k8s.io/v1
+kind: VolumeSnapshotClass
+metadata:
+  name: csi-cinder-snapclass
+driver: evs.csi.huaweicloud.com
+deletionPolicy: Delete
+parameters:
+  force-create: "false"
+
+---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-snapshot-demo
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: csi-sc-cinderplugin
